@@ -18,12 +18,7 @@
           <div class="flex">
             <div class="flex flex-shrink-0 items-center">
               <img
-                class="block h-8 w-auto lg:hidden"
-                src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-                alt="Your Company"
-              />
-              <img
-                class="hidden h-8 w-auto lg:block"
+                class="block h-8 w-auto"
                 src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
                 alt="Your Company"
               />
@@ -79,10 +74,10 @@
                     v-slot="{ active }"
                   >
                     <a
-                      :href="item.href"
+                      @click="item.action"
                       :class="[
                         active ? 'bg-gray-100' : '',
-                        'block px-4 py-2 text-sm text-gray-700',
+                        'block px-4 py-2 text-sm text-gray-700 cursor-pointer',
                       ]"
                       >{{ item.name }}</a
                     >
@@ -153,23 +148,15 @@
               as="a"
               @click="item.action"
               class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-              >{{ item.name }}</DisclosureButton
             >
+              {{ item.name }}
+            </DisclosureButton>
           </div>
         </div>
       </DisclosurePanel>
     </Disclosure>
 
     <div class="py-10">
-      <header>
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h1
-            class="text-3xl font-bold leading-tight tracking-tight text-gray-900"
-          >
-            Dashboard
-          </h1>
-        </div>
-      </header>
       <main>
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div class="px-4 py-8 sm:px-0">
