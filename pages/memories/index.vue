@@ -1,8 +1,35 @@
 <script lang="ts" setup>
+import type { Database } from "~/types";
+
 definePageMeta({
   layout: "dashboard",
   middleware: "auth",
 });
+
+const client = useSupabaseClient<Database>();
+const user = useSupabaseUser();
+
+const name = ref("");
+const isPrivat = ref(true);
+
+const createMemory = async (e: Event) => {
+  e.preventDefault();
+  if (name.value) {
+    const { data, error } = await client
+      .from("memories")
+      .insert({
+        name: name.value,
+        privat: isPrivat.value,
+        owner: user.value?.id,
+      })
+      .select();
+    // TODO: Error handling
+    if (error) return;
+    if (data && data[0]) {
+      navigateTo("/memories/" + data[0].id);
+    }
+  }
+};
 </script>
 
 <template>
@@ -27,6 +54,7 @@ definePageMeta({
             >
             <div class="mt-1 sm:col-span-2 sm:mt-0">
               <input
+                v-model="name"
                 type="text"
                 name="name"
                 id="name"
@@ -55,10 +83,12 @@ definePageMeta({
                   <div class="mt-4 space-y-4">
                     <div class="flex items-center">
                       <input
+                        v-model="isPrivat"
                         id="public"
-                        name="push-notifications"
+                        name="isPrivat"
                         type="radio"
                         checked
+                        :value="false"
                         class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
                       />
                       <label
@@ -70,9 +100,11 @@ definePageMeta({
                     </div>
                     <div class="flex items-center">
                       <input
+                        v-model="isPrivat"
                         id="private"
-                        name="push-notifications"
+                        name="isPrivat"
                         type="radio"
+                        :value="true"
                         class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
                       />
                       <label
@@ -102,6 +134,7 @@ definePageMeta({
         <button
           type="submit"
           class="ml-3 inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          @click="createMemory"
         >
           Save
         </button>
