@@ -1,35 +1,64 @@
 <script lang="ts" setup>
+import type { Database } from "~/types";
+
 definePageMeta({
   layout: "dashboard",
   middleware: "auth",
 });
 
-const people = [
-  {
-    name: "Calvin Hawkins",
-    email: "calvin.hawkins@example.com",
-    image:
-      "https://images.unsplash.com/photo-1491528323818-fdd1faba62cc?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-  },
-  {
-    name: "Kristen Ramos",
-    email: "kristen.ramos@example.com",
-    image:
-      "https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-  },
-  {
-    name: "Ted Fox",
-    email: "ted.fox@example.com",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-  },
-];
+const user = useSupabaseUser();
+const client = useSupabaseClient<Database>();
+const route = useRoute();
+const polaroids = ref([]);
+
+const { id: memoryId } = route.params;
+
+const { data: memory, refresh } = await useAsyncData("memories", async () => {
+  const { data } = await client
+    .from("memories")
+    .select("name, owner, polaroids (path, id)")
+    .eq("id", memoryId);
+  if (!data?.length) return;
+  return data[0];
+});
+
+const getImageUrls = async () => {
+  const { data, error } = await client.storage
+    .from("polaroids")
+    .createSignedUrls(
+      memory.value.polaroids.map((p) => p.path),
+      60
+    );
+  polaroids.value = data;
+};
+
+const uploadPhoto = async (e: InputEvent) => {
+  if (!e || !user) return;
+  const image = e.target.files[0];
+  const { data: newImage, error: uploadError } = await client.storage
+    .from("polaroids")
+    .upload(`${user.value.id}/${image.name}`, image, {
+      upsert: false,
+    });
+  if (uploadError) return;
+  const { data, error } = await client
+    .from("polaroids")
+    .insert({
+      path: newImage.path,
+      owner: user.value?.id,
+      memory: memoryId,
+    })
+    .select();
+  if (!error) {
+    await refresh();
+    getImageUrls();
+  }
+};
+getImageUrls();
 </script>
 
 <template>
-  <div
-    class="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:border-t sm:border-gray-200 sm:pt-5"
-  >
+  <div class="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:pt-5">
     <label
       for="cover-photo"
       class="block text-sm font-medium text-gray-700 sm:mt-px sm:pt-2"
@@ -65,6 +94,7 @@ const people = [
                 name="file-upload"
                 type="file"
                 class="sr-only"
+                @change="uploadPhoto"
               />
             </label>
             <p class="pl-1">or drag and drop</p>
@@ -72,16 +102,15 @@ const people = [
           <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
         </div>
       </div>
-      <div class="pt-6">
+      <div v-if="polaroids.length" class="pt-6">
         <h4>Photos</h4>
         <ul role="list" class="divide-y divide-gray-200">
-          <li v-for="person in people" :key="person.email" class="flex py-4">
-            <img class="h-10 w-10 rounded-full" :src="person.image" alt="" />
-            <div class="flex items-center ml-3">
-              <p class="text-sm font-medium text-gray-900">
-                {{ person.name }}
-              </p>
-            </div>
+          <li
+            v-for="polaroid in polaroids"
+            :key="polaroid.path"
+            class="flex py-4"
+          >
+            <img class="h-30 w-20" :src="polaroid.signedUrl" alt="" />
           </li>
         </ul>
       </div>

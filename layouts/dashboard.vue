@@ -1,12 +1,4 @@
 <template>
-  <!--
-    This example requires updating your template:
-
-    ```
-    <html class="h-full">
-    <body class="h-full">
-    ```
-  -->
   <div class="min-h-full">
     <Disclosure
       as="nav"
@@ -16,13 +8,13 @@
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 justify-between">
           <div class="flex">
-            <div class="flex flex-shrink-0 items-center">
+            <NuxtLink to="/dashboard" class="flex flex-shrink-0 items-center">
               <img
                 class="block h-8 w-auto"
                 src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
                 alt="Your Company"
               />
-            </div>
+            </NuxtLink>
             <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
               <NuxtLink
                 v-for="item in navigation"
@@ -189,6 +181,8 @@ const user = {
   imageUrl:
     "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
 };
+
+const navigation = [];
 
 const userNavigation = [
   {
